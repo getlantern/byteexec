@@ -1,5 +1,6 @@
 // Package byteexec provides a very basic facility for running executables
-// supplied as byte arrays.
+// supplied as byte arrays, which is handy when used with
+// github.com/jteeuwen/go-bindata.
 //
 // ByteExec works by storing the provided command in a temp file.  A ByteExec
 // should always be closed using its Close() method to clean up the temp file.
