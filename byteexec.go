@@ -25,7 +25,7 @@ import (
 )
 
 type ByteExec struct {
-	tmpFile *os.File
+	fileName string
 }
 
 // NewByteExec creates a new ByteExec using the program stored in the provided
@@ -40,27 +40,32 @@ func NewByteExec(bytes []byte) (be *ByteExec, err error) {
 	if err != nil {
 		return
 	}
+	tmpFile.Sync()
 	tmpFile.Chmod(0755)
-	be = &ByteExec{tmpFile: tmpFile}
+	tmpFile.Close()
+
+	orig := tmpFile.Name()
+	renamed := renameExecutable(orig)
+	if renamed != orig {
+		err = os.Rename(orig, renamed)
+		if err != nil {
+			return nil, err
+		}
+	}
+	be = &ByteExec{fileName: renamed}
 	return
 }
 
 // Command creates an exec.Cmd using the supplied args.
 func (be *ByteExec) Command(args ...string) *exec.Cmd {
-	return exec.Command(be.tmpFile.Name(), args...)
+	return exec.Command(be.fileName, args...)
 }
 
 // Close() closes the ByteExec, cleaning up the associated temp file.
 func (be *ByteExec) Close() error {
-	if be.tmpFile == nil {
+	if be.fileName == "" {
 		return nil
 	} else {
-		err1 := be.tmpFile.Close()
-		err2 := os.Remove(be.tmpFile.Name())
-		if err2 != nil {
-			return err2
-		} else {
-			return err1
-		}
+		return os.Remove(be.fileName)
 	}
 }
