@@ -31,8 +31,15 @@ type ByteExec struct {
 // NewByteExec creates a new ByteExec using the program stored in the provided
 // bytes.
 func NewByteExec(bytes []byte) (be *ByteExec, err error) {
+	return NewNamedByteExec(bytes, "byteexec")
+}
+
+// NewNamedByteExec creates a new ByteExec using the program stored in the
+// provided bytes and uses the given prefix to name the temporary file that gets
+// executed.
+func NewNamedByteExec(bytes []byte, prefix string) (be *ByteExec, err error) {
 	var tmpFile *os.File
-	tmpFile, err = ioutil.TempFile("", "byteexec_")
+	tmpFile, err = ioutil.TempFile("", prefix+"_")
 	if err != nil {
 		return
 	}
