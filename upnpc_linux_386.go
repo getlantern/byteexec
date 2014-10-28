@@ -1,9 +1,9 @@
-package igdman
+package byteexec
 
 import (
-    "fmt"
-    "reflect"
-    "unsafe"
+	"fmt"
+	"reflect"
+	"unsafe"
 )
 
 func bindata_read(data, name string) ([]byte, error) {
@@ -26,7 +26,6 @@ func upnpc() ([]byte, error) {
 	)
 }
 
-
 // Asset loads and returns the asset for the given name.
 // It returns an error if the asset could not be found or
 // could not be loaded.
@@ -38,7 +37,6 @@ func Asset(name string) ([]byte, error) {
 }
 
 // _bindata is a table, holding each asset generator, mapped to its name.
-var _bindata = map[string] func() ([]byte, error) {
+var _bindata = map[string]func() ([]byte, error){
 	"upnpc": upnpc,
-
 }

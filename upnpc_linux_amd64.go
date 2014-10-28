@@ -1,4 +1,4 @@
-package igdman
+package byteexec
 
 import (
     "fmt"
