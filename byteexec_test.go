@@ -2,21 +2,25 @@ package byteexec
 
 import (
 	"testing"
+
+	"github.com/getlantern/testify/assert"
 )
 
 func TestExec(t *testing.T) {
-	bytes, err := Asset("upnpc")
+	bytes, err := Asset("helloworld")
 	if err != nil {
-		t.Fatalf("Unable to read upnpc program: %s", err)
+		t.Fatalf("Unable to read helloworld program: %s", err)
 	}
 	be, err := NewByteExec(bytes)
 	if err != nil {
 		t.Fatalf("Unable to create new ByteExec: %s", err)
 	}
 	defer be.Close()
-	cmd := be.Command("-s")
-	err = cmd.Run()
+	cmd := be.Command()
+	out, err := cmd.CombinedOutput()
 	if err != nil {
-		t.Errorf("Unable to run command: %s", err)
+		t.Errorf("Unable to run helloworld program: %s", err)
 	}
+
+	assert.Equal(t, "Hello World", string(out), "Did not receive expected output from helloworld program")
 }
