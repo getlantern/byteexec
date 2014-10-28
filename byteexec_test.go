@@ -22,5 +22,5 @@ func TestExec(t *testing.T) {
 		t.Errorf("Unable to run helloworld program: %s", err)
 	}
 
-	assert.Equal(t, "Hello World", string(out), "Did not receive expected output from helloworld program")
+	assert.Equal(t, "Hello world\n", string(out), "Did not receive expected output from helloworld program")
 }
