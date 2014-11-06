@@ -66,19 +66,10 @@ func New(data []byte, filename string) (*ByteExec, error) {
 		}
 
 		log.Tracef("%s already exists, check to make sure contents is the same", filename)
-		checksumErr := checksumsMatch(filename, data)
-		if checksumErr == nil {
-			log.Tracef("Data in %s matches expected, using existing", filename)
-			fi, err := os.Stat(filename)
-			if err != nil || fi.Mode() != fileMode {
-				log.Tracef("Chmodding %s", filename)
-				err = os.Chmod(filename, fileMode)
-				if err != nil {
-					return nil, fmt.Errorf("Unable to chmod file %s: %s", filename, err)
-				}
-			}
-			return newByteExec(filename)
+		if checksumsMatch(filename, data) {
+			return newByteExecFromExisting(filename)
 		}
+
 		log.Tracef("Data in %s doesn't match expected, truncating file", filename)
 		file, err = os.OpenFile(filename, os.O_RDWR|os.O_CREATE|os.O_TRUNC, fileMode)
 		if err != nil {
@@ -101,22 +92,34 @@ func (be *ByteExec) Command(args ...string) *exec.Cmd {
 	return exec.Command(be.filename, args...)
 }
 
-func checksumsMatch(filename string, data []byte) error {
+func checksumsMatch(filename string, data []byte) bool {
 	shasum := sha256.New()
 	file, err := os.OpenFile(filename, os.O_RDONLY, 0)
 	if err != nil {
-		return fmt.Errorf("Unable to open existing file at %s for reading: %s", filename, err)
+		log.Tracef("Unable to open existing file at %s for reading: %s", filename, err)
+		return false
 	}
 	_, err = io.Copy(shasum, file)
 	if err != nil {
-		return fmt.Errorf("Unable to read bytes to calculate sha sum: %s", err)
+		log.Tracef("Unable to read bytes to calculate sha sum: %s", err)
+		return false
 	}
 	checksumOnDisk := shasum.Sum(nil)
 	expectedChecksum := sha256.Sum256(data)
-	if !bytes.Equal(checksumOnDisk, expectedChecksum[:]) {
-		return fmt.Errorf("Checksums don't match")
+	return bytes.Equal(checksumOnDisk, expectedChecksum[:])
+}
+
+func newByteExecFromExisting(filename string) (*ByteExec, error) {
+	log.Tracef("Data in %s matches expected, using existing", filename)
+	fi, err := os.Stat(filename)
+	if err != nil || fi.Mode() != fileMode {
+		log.Tracef("Chmodding %s", filename)
+		err = os.Chmod(filename, fileMode)
+		if err != nil {
+			return nil, fmt.Errorf("Unable to chmod file %s: %s", filename, err)
+		}
 	}
-	return nil
+	return newByteExec(filename)
 }
 
 func newByteExec(filename string) (*ByteExec, error) {
