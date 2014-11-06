@@ -15,7 +15,8 @@
 //    // cmd is an os/exec.Cmd
 //    err = cmd.Run()
 //
-// Note - byteexec.New is somewhat expensive,
+// Note - byteexec.New is somewhat expensive, and Exec is safe for concurrent
+// use, so it's advisable to create only one Exec for each executable.
 package byteexec
 
 import (
