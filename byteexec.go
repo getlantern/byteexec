@@ -52,8 +52,12 @@ type Exec struct {
 
 // New creates a new Exec using the program stored in the provided data, at the
 // provided filename (relative or absolute path allowed). If the path given is
-// a relative path, the executable will be placed in the user's home directory
-// in a subfolder named ".byteexec".
+// a relative path, the executable will be placed in one of the following
+// locations:
+//
+// On Windows - %APPDATA%/byteexec
+// On OSX - ~/Library/Application Support/byteexec
+// All Others - ~/.byteexec
 //
 // Creating a new Exec can be somewhat expensive, so it's best to create only
 // one Exec per executable and reuse that.
@@ -156,7 +160,7 @@ func inUserDir(filename string) (string, error) {
 	if err != nil {
 		return filename, fmt.Errorf("Unable to determine user's home directory: %s", err)
 	}
-	folder := path.Join(usr.HomeDir, ".byteexec")
+	folder := pathForRelativeFiles(usr.HomeDir)
 	err = os.MkdirAll(folder, fileMode)
 	if err != nil {
 		return filename, fmt.Errorf("Unable to make folder %s: %s", folder, err)

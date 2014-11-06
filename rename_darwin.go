@@ -1,14 +1,15 @@
+// +build !windows
+
 package byteexec
 
 import (
-	"os"
 	"path"
 )
 
 func renameExecutable(orig string) string {
-	return orig + ".exe"
+	return orig
 }
 
 func pathForRelativeFiles(homeDir string) string {
-	return path.Join(os.Getenv("APPDATA"), "byteexec")
+	return path.Join(homeDir, "Library/Application Support/byteexec")
 }
