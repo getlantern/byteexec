@@ -63,6 +63,7 @@ func New(data []byte, filename string) (*Exec, error) {
 	filename = renameExecutable(filename)
 	log.Tracef("Renamed executable to %s for this platform", filename)
 
+	log.Trace("Attempting to open file for creating, but only if it doesn't already exist")
 	file, err := os.OpenFile(filename, os.O_RDWR|os.O_CREATE|os.O_EXCL, fileMode)
 	if err != nil {
 		if !os.IsExist(err) {
@@ -71,6 +72,7 @@ func New(data []byte, filename string) (*Exec, error) {
 
 		log.Tracef("%s already exists, check to make sure contents is the same", filename)
 		if checksumsMatch(filename, data) {
+			log.Tracef("Data in %s matches expected, using existing", filename)
 			return newExecFromExisting(filename)
 		}
 
@@ -81,7 +83,7 @@ func New(data []byte, filename string) (*Exec, error) {
 		}
 	}
 
-	log.Tracef("Creating new file at %s", filename)
+	log.Tracef("Created new file at %s, saving executable", filename)
 	_, err = file.Write(data)
 	if err != nil {
 		os.Remove(filename)
@@ -89,6 +91,8 @@ func New(data []byte, filename string) (*Exec, error) {
 	}
 	file.Sync()
 	file.Close()
+
+	log.Trace("File saved, returning new Exec")
 	return newExec(filename)
 }
 
@@ -115,7 +119,6 @@ func checksumsMatch(filename string, data []byte) bool {
 }
 
 func newExecFromExisting(filename string) (*Exec, error) {
-	log.Tracef("Data in %s matches expected, using existing", filename)
 	fi, err := os.Stat(filename)
 	if err != nil || fi.Mode() != fileMode {
 		log.Tracef("Chmodding %s", filename)
