@@ -58,9 +58,7 @@ func New(data []byte, filename string) (*ByteExec, error) {
 	log.Tracef("Renamed executable to %s for this platform", filename)
 
 	file, err := os.OpenFile(filename, os.O_RDWR|os.O_CREATE|os.O_EXCL, fileMode)
-	if err == nil {
-		log.Tracef("Creating new file at %s", filename)
-	} else {
+	if err != nil {
 		if !os.IsExist(err) {
 			return nil, fmt.Errorf("Unexpected error opening %s: %s", filename, err)
 		}
@@ -77,6 +75,7 @@ func New(data []byte, filename string) (*ByteExec, error) {
 		}
 	}
 
+	log.Tracef("Creating new file at %s", filename)
 	_, err = file.Write(data)
 	if err != nil {
 		os.Remove(filename)
