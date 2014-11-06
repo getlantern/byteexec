@@ -17,24 +17,17 @@ const (
 )
 
 func TestExec(t *testing.T) {
-	tempDir, err := ioutil.TempDir("", "")
-	if err != nil {
-		t.Fatalf("Unable to create temp dir: %s", err)
-	}
-	defer os.RemoveAll(tempDir)
-	filename := tempDir + "/" + program
-
 	data, err := Asset(program)
 	if err != nil {
 		t.Fatalf("Unable to read helloworld program: %s", err)
 	}
-	be := createByteExec(t, data, filename)
+	be := createByteExec(t, data)
 
 	// Concurrently create some other BEs and make sure they don't get errors
 	var wg sync.WaitGroup
 	wg.Add(concurrency)
 	for i := 0; i < concurrency; i++ {
-		_, err := New(data, filename)
+		_, err := New(data, program)
 		assert.NoError(t, err, "Concurrent New should have succeeded")
 		wg.Done()
 	}
@@ -43,32 +36,32 @@ func TestExec(t *testing.T) {
 	originalInfo := testByteExec(t, be)
 
 	// Recreate be and make sure file is reused
-	be = createByteExec(t, data, filename)
+	be = createByteExec(t, data)
 	updatedInfo := testByteExec(t, be)
 	assert.Equal(t, originalInfo.ModTime(), updatedInfo.ModTime(), "File modification time should be unchanged after creating new ByteExec")
 
 	// Now mess with the file permissions and make sure that we can still run
-	err = os.Chmod(filename, 0655)
+	err = os.Chmod(be.filename, 0655)
 	if err != nil {
-		t.Fatalf("Unable to chmod test executable %s: %s", filename, err)
+		t.Fatalf("Unable to chmod test executable %s: %s", be.filename, err)
 	}
-	be = createByteExec(t, data, filename)
+	be = createByteExec(t, data)
 	updatedInfo = testByteExec(t, be)
 	assert.Equal(t, fileMode, updatedInfo.Mode(), "File mode is changed back to %v", fileMode)
 
 	// Now mess with the file contents and make sure it gets overwritten on next
 	// ByteExec
-	ioutil.WriteFile(filename, []byte("Junk"), 0755)
-	be = createByteExec(t, data, filename)
+	ioutil.WriteFile(be.filename, []byte("Junk"), 0755)
+	be = createByteExec(t, data)
 	updatedInfo = testByteExec(t, be)
 	assert.NotEqual(t, originalInfo.ModTime(), updatedInfo.ModTime(), "File modification time should be changed after creating new ByteExec on bad data")
 }
 
-func createByteExec(t *testing.T, data []byte, filename string) *Exec {
+func createByteExec(t *testing.T, data []byte) *Exec {
 	// Sleep 1 second to give file timestamp a chance to increase
 	time.Sleep(1 * time.Second)
 
-	be, err := New(data, filename)
+	be, err := New(data, program)
 	if err != nil {
 		t.Fatalf("Unable to create new ByteExec: %s", err)
 	}

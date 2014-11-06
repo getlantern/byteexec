@@ -26,6 +26,8 @@ import (
 	"io"
 	"os"
 	"os/exec"
+	"os/user"
+	"path"
 	"path/filepath"
 	"sync"
 
@@ -33,7 +35,7 @@ import (
 )
 
 const (
-	fileMode = 0755
+	fileMode = 0744
 )
 
 var (
@@ -49,9 +51,12 @@ type Exec struct {
 }
 
 // New creates a new Exec using the program stored in the provided data, at the
-// provided filename (relative or absolute path allowed). This can be a somewhat
-// expensive, so it's best to create only one Exec per executable and reuse
-// that.
+// provided filename (relative or absolute path allowed). If the path given is
+// a relative path, the executable will be placed in the user's home directory
+// in a subfolder named ".byteexec".
+//
+// Creating a new Exec can be somewhat expensive, so it's best to create only
+// one Exec per executable and reuse that.
 //
 // WARNING - if a file already exists at this location and its contents differ
 // from data, Exec will attempt to overwrite it.
@@ -60,8 +65,15 @@ func New(data []byte, filename string) (*Exec, error) {
 	initMutex.Lock()
 	defer initMutex.Unlock()
 
+	var err error
+	if !path.IsAbs(filename) {
+		filename, err = inUserDir(filename)
+		if err != nil {
+			return nil, err
+		}
+	}
 	filename = renameExecutable(filename)
-	log.Tracef("Renamed executable to %s for this platform", filename)
+	log.Tracef("Placing executable in %s", filename)
 
 	log.Trace("Attempting to open file for creating, but only if it doesn't already exist")
 	file, err := os.OpenFile(filename, os.O_RDWR|os.O_CREATE|os.O_EXCL, fileMode)
@@ -136,4 +148,18 @@ func newExec(filename string) (*Exec, error) {
 		return nil, err
 	}
 	return &Exec{filename: absolutePath}, nil
+}
+
+func inUserDir(filename string) (string, error) {
+	log.Tracef("Determining user's home directory")
+	usr, err := user.Current()
+	if err != nil {
+		return filename, fmt.Errorf("Unable to determine user's home directory: %s", err)
+	}
+	folder := path.Join(usr.HomeDir, ".byteexec")
+	err = os.MkdirAll(folder, fileMode)
+	if err != nil {
+		return filename, fmt.Errorf("Unable to make folder %s: %s", folder, err)
+	}
+	return path.Join(folder, filename), nil
 }
