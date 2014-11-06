@@ -45,7 +45,9 @@ type ByteExec struct {
 }
 
 // New creates a new ByteExec using the program stored in the provided data, at
-// the provided filename (relative or absolute path allowed).
+// the provided filename (relative or absolute path allowed). This can be a
+// somewhat expensive, so it's best to create only one ByteExec per executable
+// and reuse that.
 //
 // WARNING - if a file already exists at this location and its contents differ
 // from data, byteexec will attempt to overwrite it.
