@@ -64,7 +64,7 @@ func TestExec(t *testing.T) {
 	assert.NotEqual(t, originalInfo.ModTime(), updatedInfo.ModTime(), "File modification time should be changed after creating new ByteExec on bad data")
 }
 
-func createByteExec(t *testing.T, data []byte, filename string) *ByteExec {
+func createByteExec(t *testing.T, data []byte, filename string) *Exec {
 	// Sleep 1 second to give file timestamp a chance to increase
 	time.Sleep(1 * time.Second)
 	be, err := New(data, filename)
@@ -74,7 +74,7 @@ func createByteExec(t *testing.T, data []byte, filename string) *ByteExec {
 	return be
 }
 
-func testByteExec(t *testing.T, be *ByteExec) os.FileInfo {
+func testByteExec(t *testing.T, be *Exec) os.FileInfo {
 	cmd := be.Command()
 	out, err := cmd.CombinedOutput()
 	if err != nil {

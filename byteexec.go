@@ -1,13 +1,13 @@
-// Package byteexec provides a very basic facility for running executables
+// Package Exec provides a very basic facility for running executables
 // supplied as byte arrays, which is handy when used with
 // github.com/jteeuwen/go-bindata.
 //
-// ByteExec works by storing the provided command in a file.
+// Exec works by storing the provided command in a file.
 //
 // Example Usage:
 //
 //    programBytes := // read bytes from somewhere
-//    be, err := NewByteExec(programBytes)
+//    be, err := NewExec(programBytes)
 //    if err != nil {
 //      log.Fatalf("Uh oh: %s", err)
 //    }
@@ -35,23 +35,23 @@ const (
 )
 
 var (
-	log = golog.LoggerFor("byteexec")
+	log = golog.LoggerFor("Exec")
 
 	initMutex sync.Mutex
 )
 
-type ByteExec struct {
+type Exec struct {
 	filename string
 }
 
-// New creates a new ByteExec using the program stored in the provided data, at
+// New creates a new Exec using the program stored in the provided data, at
 // the provided filename (relative or absolute path allowed). This can be a
-// somewhat expensive, so it's best to create only one ByteExec per executable
+// somewhat expensive, so it's best to create only one Exec per executable
 // and reuse that.
 //
 // WARNING - if a file already exists at this location and its contents differ
-// from data, byteexec will attempt to overwrite it.
-func New(data []byte, filename string) (*ByteExec, error) {
+// from data, Exec will attempt to overwrite it.
+func New(data []byte, filename string) (*Exec, error) {
 	// Use initMutex to synchronize file operations by this process
 	initMutex.Lock()
 	defer initMutex.Unlock()
@@ -67,7 +67,7 @@ func New(data []byte, filename string) (*ByteExec, error) {
 
 		log.Tracef("%s already exists, check to make sure contents is the same", filename)
 		if checksumsMatch(filename, data) {
-			return newByteExecFromExisting(filename)
+			return newExecFromExisting(filename)
 		}
 
 		log.Tracef("Data in %s doesn't match expected, truncating file", filename)
@@ -85,11 +85,11 @@ func New(data []byte, filename string) (*ByteExec, error) {
 	}
 	file.Sync()
 	file.Close()
-	return newByteExec(filename)
+	return newExec(filename)
 }
 
 // Command creates an exec.Cmd using the supplied args.
-func (be *ByteExec) Command(args ...string) *exec.Cmd {
+func (be *Exec) Command(args ...string) *exec.Cmd {
 	return exec.Command(be.filename, args...)
 }
 
@@ -110,7 +110,7 @@ func checksumsMatch(filename string, data []byte) bool {
 	return bytes.Equal(checksumOnDisk, expectedChecksum[:])
 }
 
-func newByteExecFromExisting(filename string) (*ByteExec, error) {
+func newExecFromExisting(filename string) (*Exec, error) {
 	log.Tracef("Data in %s matches expected, using existing", filename)
 	fi, err := os.Stat(filename)
 	if err != nil || fi.Mode() != fileMode {
@@ -120,13 +120,13 @@ func newByteExecFromExisting(filename string) (*ByteExec, error) {
 			return nil, fmt.Errorf("Unable to chmod file %s: %s", filename, err)
 		}
 	}
-	return newByteExec(filename)
+	return newExec(filename)
 }
 
-func newByteExec(filename string) (*ByteExec, error) {
+func newExec(filename string) (*Exec, error) {
 	absolutePath, err := filepath.Abs(filename)
 	if err != nil {
 		return nil, err
 	}
-	return &ByteExec{filename: absolutePath}, nil
+	return &Exec{filename: absolutePath}, nil
 }
