@@ -67,6 +67,7 @@ func TestExec(t *testing.T) {
 func createByteExec(t *testing.T, data []byte, filename string) *Exec {
 	// Sleep 1 second to give file timestamp a chance to increase
 	time.Sleep(1 * time.Second)
+
 	be, err := New(data, filename)
 	if err != nil {
 		t.Fatalf("Unable to create new ByteExec: %s", err)

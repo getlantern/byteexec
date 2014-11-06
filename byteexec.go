@@ -1,20 +1,21 @@
-// Package Exec provides a very basic facility for running executables
+// Package byteexec provides a very basic facility for running executables
 // supplied as byte arrays, which is handy when used with
 // github.com/jteeuwen/go-bindata.
 //
-// Exec works by storing the provided command in a file.
+// byteexec works by storing the provided command in a file.
 //
 // Example Usage:
 //
 //    programBytes := // read bytes from somewhere
-//    be, err := NewExec(programBytes)
+//    be, err := byteexec.New(programBytes)
 //    if err != nil {
 //      log.Fatalf("Uh oh: %s", err)
 //    }
-//    defer be.Close()
 //    cmd := be.Command("arg1", "arg2")
 //    // cmd is an os/exec.Cmd
 //    err = cmd.Run()
+//
+// Note - byteexec.New is somewhat expensive,
 package byteexec
 
 import (
@@ -40,14 +41,16 @@ var (
 	initMutex sync.Mutex
 )
 
+// Exec is a handle to an executable that can be used to create an exec.Cmd
+// using the Command method. Exec is safe for concurrent use.
 type Exec struct {
 	filename string
 }
 
-// New creates a new Exec using the program stored in the provided data, at
-// the provided filename (relative or absolute path allowed). This can be a
-// somewhat expensive, so it's best to create only one Exec per executable
-// and reuse that.
+// New creates a new Exec using the program stored in the provided data, at the
+// provided filename (relative or absolute path allowed). This can be a somewhat
+// expensive, so it's best to create only one Exec per executable and reuse
+// that.
 //
 // WARNING - if a file already exists at this location and its contents differ
 // from data, Exec will attempt to overwrite it.
