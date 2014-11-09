@@ -2,14 +2,10 @@
 
 package byteexec
 
-import (
-	"path"
-)
-
 func renameExecutable(orig string) string {
 	return orig
 }
 
-func pathForRelativeFiles() string {
+func pathForRelativeFiles() (string, error) {
 	return inHomeDir(".byteexec")
 }
