@@ -71,7 +71,7 @@ func New(data []byte, filename string) (*Exec, error) {
 
 	var err error
 	if !path.IsAbs(filename) {
-		filename, err = inUserDir(filename)
+		filename, err = inStandardDir(filename)
 		if err != nil {
 			return nil, err
 		}
@@ -154,16 +154,23 @@ func newExec(filename string) (*Exec, error) {
 	return &Exec{filename: absolutePath}, nil
 }
 
-func inUserDir(filename string) (string, error) {
+func inStandardDir(filename string) (string, error) {
+	folder, err := pathForRelativeFiles()
+	if err != nil {
+		return "", err
+	}
+	err = os.MkdirAll(folder, fileMode)
+	if err != nil {
+		return "", fmt.Errorf("Unable to make folder %s: %s", folder, err)
+	}
+	return path.Join(folder, filename), nil
+}
+
+func inHomeDir(filename string) (string, error) {
 	log.Tracef("Determining user's home directory")
 	usr, err := user.Current()
 	if err != nil {
-		return filename, fmt.Errorf("Unable to determine user's home directory: %s", err)
+		return "", fmt.Errorf("Unable to determine user's home directory: %s", err)
 	}
-	folder := pathForRelativeFiles(usr.HomeDir)
-	err = os.MkdirAll(folder, fileMode)
-	if err != nil {
-		return filename, fmt.Errorf("Unable to make folder %s: %s", folder, err)
-	}
-	return path.Join(folder, filename), nil
+	return path.Join(usr.HomeDir, filename), nil
 }

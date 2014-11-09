@@ -10,6 +10,6 @@ func renameExecutable(orig string) string {
 	return orig
 }
 
-func pathForRelativeFiles(homeDir string) string {
-	return path.Join(homeDir, ".byteexec")
+func pathForRelativeFiles() string {
+	return inHomeDir(".byteexec")
 }
