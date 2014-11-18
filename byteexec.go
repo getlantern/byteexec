@@ -20,8 +20,6 @@
 package byteexec
 
 import (
-	"bytes"
-	"crypto/sha256"
 	"fmt"
 	"io"
 	"os"
@@ -87,7 +85,7 @@ func New(data []byte, filename string) (*Exec, error) {
 		}
 
 		log.Tracef("%s already exists, check to make sure contents is the same", filename)
-		if checksumsMatch(filename, data) {
+		if dataMatches(filename, data) {
 			log.Tracef("Data in %s matches expected, using existing", filename)
 			return newExecFromExisting(filename)
 		}
@@ -117,21 +115,40 @@ func (be *Exec) Command(args ...string) *exec.Cmd {
 	return exec.Command(be.filename, args...)
 }
 
-func checksumsMatch(filename string, data []byte) bool {
-	shasum := sha256.New()
+// dataMatches compares the file at filename byte for byte with the given data
+func dataMatches(filename string, data []byte) bool {
+	fileInfo, err := os.Stat(filename)
+	if err != nil {
+		log.Tracef("Unable to stat file %s", filename)
+		return false
+	}
+	if fileInfo.Size() != int64(len(data)) {
+		return false
+	}
 	file, err := os.OpenFile(filename, os.O_RDONLY, 0)
 	if err != nil {
 		log.Tracef("Unable to open existing file at %s for reading: %s", filename, err)
 		return false
 	}
-	_, err = io.Copy(shasum, file)
-	if err != nil {
-		log.Tracef("Unable to read bytes to calculate sha sum: %s", err)
-		return false
+	b := make([]byte, 65536)
+	i := 0
+	for {
+		n, err := file.Read(b)
+		if err != nil && err != io.EOF {
+			log.Tracef("Error reading %s for comparison: %s", filename, err)
+			return false
+		}
+		for j := 0; j < n; j++ {
+			if b[j] != data[i] {
+				return false
+			}
+			i = i + 1
+		}
+		if err == io.EOF {
+			break
+		}
 	}
-	checksumOnDisk := shasum.Sum(nil)
-	expectedChecksum := sha256.Sum256(data)
-	return bytes.Equal(checksumOnDisk, expectedChecksum[:])
+	return true
 }
 
 func newExecFromExisting(filename string) (*Exec, error) {
