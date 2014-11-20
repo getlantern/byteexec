@@ -6,9 +6,9 @@ as Go byte arrays.  This is handy when combined with
 
 To install:
 
-`go get github.com/oxtoacart/byteexec`
+`go get github.com/getlantern/byteexec`
 
 For docs:
 
-`godoc github.com/oxtoacart/byteexec`
+`godoc github.com/getlantern/byteexec`
 
