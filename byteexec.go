@@ -93,7 +93,7 @@ func New(data []byte, filename string) (*Exec, error) {
 		log.Tracef("Data in %s doesn't match expected, truncating file", filename)
 		file, err = os.OpenFile(filename, os.O_RDWR|os.O_CREATE|os.O_TRUNC, fileMode)
 		if err != nil {
-			return nil, fmt.Errorf("Unable to truncate %s: %s", err)
+			return nil, fmt.Errorf("Unable to truncate %s: %s", filename, err)
 		}
 	}
 
