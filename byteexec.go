@@ -91,7 +91,7 @@ func New(data []byte, filename string) (*Exec, error) {
 		}
 
 		log.Tracef("Data in %s doesn't match expected, truncating file", filename)
-		file, err = os.OpenFile(filename, os.O_RDWR|os.O_CREATE|os.O_TRUNC, fileMode)
+		file, err = openAndTruncate(filename, true)
 		if err != nil {
 			return nil, fmt.Errorf("Unable to truncate %s: %s", filename, err)
 		}
@@ -108,6 +108,20 @@ func New(data []byte, filename string) (*Exec, error) {
 
 	log.Trace("File saved, returning new Exec")
 	return newExec(filename)
+}
+
+func openAndTruncate(filename string, removeIfNecessary bool) (*os.File, error) {
+	file, err := os.OpenFile(filename, os.O_RDWR|os.O_CREATE|os.O_TRUNC, fileMode)
+	if err != nil && os.IsPermission(err) && removeIfNecessary {
+		log.Tracef("Permission denied truncating file %v, try to remove", filename)
+		err = os.Remove(filename)
+		if err != nil {
+			return nil, fmt.Errorf("Unable to remove file %v: %v", filename, err)
+		}
+		return openAndTruncate(filename, false)
+	}
+
+	return file, err
 }
 
 // Command creates an exec.Cmd using the supplied args.
