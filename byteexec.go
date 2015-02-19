@@ -45,7 +45,7 @@ var (
 // Exec is a handle to an executable that can be used to create an exec.Cmd
 // using the Command method. Exec is safe for concurrent use.
 type Exec struct {
-	filename string
+	Filename string
 }
 
 // New creates a new Exec using the program stored in the provided data, at the
@@ -112,7 +112,7 @@ func New(data []byte, filename string) (*Exec, error) {
 
 // Command creates an exec.Cmd using the supplied args.
 func (be *Exec) Command(args ...string) *exec.Cmd {
-	return exec.Command(be.filename, args...)
+	return exec.Command(be.Filename, args...)
 }
 
 // dataMatches compares the file at filename byte for byte with the given data
@@ -168,7 +168,7 @@ func newExec(filename string) (*Exec, error) {
 	if err != nil {
 		return nil, err
 	}
-	return &Exec{filename: absolutePath}, nil
+	return &Exec{Filename: absolutePath}, nil
 }
 
 func inStandardDir(filename string) (string, error) {
