@@ -171,7 +171,7 @@ func newExecFromExisting(filename string) (*Exec, error) {
 		log.Tracef("Chmodding %s", filename)
 		err = os.Chmod(filename, fileMode)
 		if err != nil {
-			return nil, fmt.Errorf("Unable to chmod file %s: %s", filename, err)
+			log.Debugf("Warning - unable to chmod file %s: %s", filename, err)
 		}
 	}
 	return newExec(filename)
