@@ -53,7 +53,7 @@ type Exec struct {
 // a relative path, the executable will be placed in one of the following
 // locations:
 //
-// On Windows - %APPDATA%/byteexec
+// On Windows - %APPDATA%\byteexec
 // On OSX - ~/Library/Application Support/byteexec
 // All Others - ~/.byteexec
 //
@@ -69,7 +69,7 @@ func New(data []byte, filename string) (*Exec, error) {
 
 	var err error
 	if !path.IsAbs(filename) {
-		filename, err = inStandardDir(filename)
+		filename, err = InStandardDir(filename)
 		if err != nil {
 			return nil, err
 		}
@@ -98,7 +98,13 @@ func newExec(filename string) (*Exec, error) {
 	return &Exec{Filename: absolutePath}, nil
 }
 
-func inStandardDir(filename string) (string, error) {
+// InStandardDir puts returns a path in a standard directory of the
+// system, based on the OS.
+//
+// On Windows - %APPDATA%\byteexec\<filename>
+// On OSX - ~/Library/Application Support/byteexec/<filename>
+// All Others - ~/.byteexec/<filename>
+func InStandardDir(filename string) (string, error) {
 	folder, err := pathForRelativeFiles()
 	if err != nil {
 		return "", err
