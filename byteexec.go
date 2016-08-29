@@ -24,7 +24,6 @@ import (
 	"os"
 	"os/exec"
 	"os/user"
-	"path"
 	"path/filepath"
 	"sync"
 
@@ -32,12 +31,10 @@ import (
 	"github.com/getlantern/golog"
 )
 
-const (
-	fileMode = 0744
-)
-
 var (
 	log = golog.LoggerFor("Exec")
+
+	fileMode = os.FileMode(0744)
 
 	initMutex sync.Mutex
 )
@@ -53,7 +50,7 @@ type Exec struct {
 // a relative path, the executable will be placed in one of the following
 // locations:
 //
-// On Windows - %APPDATA%\byteexec
+// On Windows - %APPDATA%/byteexec
 // On OSX - ~/Library/Application Support/byteexec
 // All Others - ~/.byteexec
 //
@@ -68,8 +65,8 @@ func New(data []byte, filename string) (*Exec, error) {
 	defer initMutex.Unlock()
 
 	var err error
-	if !path.IsAbs(filename) {
-		filename, err = InStandardDir(filename)
+	if !filepath.IsAbs(filename) {
+		filename, err = inStandardDir(filename)
 		if err != nil {
 			return nil, err
 		}
@@ -98,13 +95,7 @@ func newExec(filename string) (*Exec, error) {
 	return &Exec{Filename: absolutePath}, nil
 }
 
-// InStandardDir puts returns a path in a standard directory of the
-// system, based on the OS.
-//
-// On Windows - %APPDATA%\byteexec\<filename>
-// On OSX - ~/Library/Application Support/byteexec/<filename>
-// All Others - ~/.byteexec/<filename>
-func InStandardDir(filename string) (string, error) {
+func inStandardDir(filename string) (string, error) {
 	folder, err := pathForRelativeFiles()
 	if err != nil {
 		return "", err
@@ -113,7 +104,7 @@ func InStandardDir(filename string) (string, error) {
 	if err != nil {
 		return "", fmt.Errorf("Unable to make folder %s: %s", folder, err)
 	}
-	return path.Join(folder, filename), nil
+	return filepath.Join(folder, filename), nil
 }
 
 func inHomeDir(filename string) (string, error) {
@@ -122,5 +113,5 @@ func inHomeDir(filename string) (string, error) {
 	if err != nil {
 		return "", fmt.Errorf("Unable to determine user's home directory: %s", err)
 	}
-	return path.Join(usr.HomeDir, filename), nil
+	return filepath.Join(usr.HomeDir, filename), nil
 }
