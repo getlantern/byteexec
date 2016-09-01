@@ -60,6 +60,7 @@ type Exec struct {
 // WARNING - if a file already exists at this location and its contents differ
 // from data, Exec will attempt to overwrite it.
 func New(data []byte, filename string) (*Exec, error) {
+	log.Tracef("Creating new at %v", filename)
 	// Use initMutex to synchronize file operations by this process
 	initMutex.Lock()
 	defer initMutex.Unlock()
