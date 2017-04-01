@@ -7,7 +7,7 @@
 // Example Usage:
 //
 //    programBytes := // read bytes from somewhere
-//    be, err := byteexec.New(programBytes)
+//    be, err := byteexec.New(programBytes, "new/path/to/executable")
 //    if err != nil {
 //      log.Fatalf("Uh oh: %s", err)
 //    }
