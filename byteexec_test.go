@@ -52,7 +52,7 @@ func TestExec(t *testing.T) {
 	if runtime.GOOS != "windows" {
 		// On windows, file mode doesn't work as expected, so check only on
 		// non-windows platforms
-		assert.Equal(t, fileMode, updatedInfo.Mode(), fmt.Sprintf("Executable file should have been chmodded. File mode was %v instead of %v", updatedInfo.Mode(), fileMode))
+		assert.Equal(t, NewFileMode, updatedInfo.Mode(), fmt.Sprintf("Executable file should have been chmodded. File mode was %v instead of %v", updatedInfo.Mode(), NewFileMode))
 	}
 
 	// Now mess with the file contents and make sure it gets overwritten on next
