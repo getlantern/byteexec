@@ -103,7 +103,7 @@ func inStandardDir(filename string) (string, error) {
 	}
 	err = os.MkdirAll(folder, fileMode)
 	if err != nil {
-		return "", fmt.Errorf("Unable to make folder %s: %s", folder, err)
+		return "", fmt.Errorf("unable to make folder %s: %s", folder, err)
 	}
 	return filepath.Join(folder, filename), nil
 }
@@ -112,7 +112,7 @@ func inHomeDir(filename string) (string, error) {
 	log.Tracef("Determining user's home directory")
 	usr, err := user.Current()
 	if err != nil {
-		return "", fmt.Errorf("Unable to determine user's home directory: %s", err)
+		return "", fmt.Errorf("unable to determine user's home directory: %s", err)
 	}
 	return filepath.Join(usr.HomeDir, filename), nil
 }
