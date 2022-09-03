@@ -34,10 +34,11 @@ import (
 var (
 	log = golog.LoggerFor("Exec")
 
-	fileMode = os.FileMode(0744)
-
 	initMutex sync.Mutex
 )
+
+// NewFileMode is the mode assigned to files passed to New.
+const NewFileMode os.FileMode = 0744
 
 // Exec is a handle to an executable that can be used to create an exec.Cmd
 // using the Command method. Exec is safe for concurrent use.
@@ -57,10 +58,34 @@ type Exec struct {
 // Creating a new Exec can be somewhat expensive, so it's best to create only
 // one Exec per executable and reuse that.
 //
-// WARNING - if a file already exists at this location and its contents differ
-// from data, Exec will attempt to overwrite it.
+// WARNING:
+//	- If a file already exists at this location and its contents differ from
+//    data, Exec will attempt to overwrite it.
+//	- Even when the file contents match the input data, the file mode will be
+//    changed to NewFileMode.
 func New(data []byte, filename string) (*Exec, error) {
 	log.Tracef("Creating new at %v", filename)
+	return loadExecutable(filename, data)
+}
+
+// Existing is like New, but specifically for programs which already exist in
+// the given file. This can be useful for situations in which it is important
+// that the file not be modified (New can affect file permissions even when the
+// file is not overwritten).
+//
+// If the path given is a relative path, the executable is assumed to be in one
+// of the following locations:
+//
+// On Windows - %APPDATA%/byteexec
+// On OSX - ~/Library/Application Support/byteexec
+// All Others - ~/.byteexec
+func Existing(filename string) (*Exec, error) {
+	log.Tracef("Loading existing at %v", filename)
+	return loadExecutable(filename, nil)
+}
+
+// If data is nil, we assume the file is to be loaded and not modified.
+func loadExecutable(filename string, data []byte) (*Exec, error) {
 	// Use initMutex to synchronize file operations by this process
 	initMutex.Lock()
 	defer initMutex.Unlock()
@@ -73,13 +98,16 @@ func New(data []byte, filename string) (*Exec, error) {
 		}
 	}
 	filename = renameExecutable(filename)
-	log.Tracef("Placing executable in %s", filename)
 
-	err = filepersist.Save(filename, data, fileMode)
-	if err != nil {
-		return nil, err
+	if data != nil {
+		log.Tracef("Placing executable in %s", filename)
+		if err := filepersist.Save(filename, data, NewFileMode); err != nil {
+			return nil, err
+		}
+		log.Trace("File saved, returning new Exec")
+	} else {
+		log.Tracef("Loading executable from %s", filename)
 	}
-	log.Trace("File saved, returning new Exec")
 	return newExec(filename)
 }
 
@@ -101,7 +129,7 @@ func inStandardDir(filename string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	err = os.MkdirAll(folder, fileMode)
+	err = os.MkdirAll(folder, NewFileMode)
 	if err != nil {
 		return "", fmt.Errorf("unable to make folder %s: %s", folder, err)
 	}
